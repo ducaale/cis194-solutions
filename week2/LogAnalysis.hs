@@ -19,4 +19,33 @@ parse :: String -> [LogMessage]
 parse = map parseMessage . lines
 
 insert :: LogMessage -> MessageTree -> MessageTree
-insert = undefined
+insert (Unknown _) messageTree = messageTree
+insert message@(LogMessage _ timestamp _) messageTree =
+  case messageTree of
+    Leaf -> Node Leaf message Leaf
+    Node _ (Unknown _) _ -> undefined
+    Node leftTree cMessage@(LogMessage _ cTimestamp _) rightTree ->
+        if cTimestamp > timestamp
+           then (Node (insert message leftTree) cMessage rightTree)
+           else (Node leftTree cMessage (insert message rightTree))
+
+build :: [LogMessage] -> MessageTree
+build = foldr insert Leaf
+
+inOrder :: MessageTree -> [LogMessage]
+inOrder Leaf = []
+inOrder (Node leftTree message rightTree) =
+  (inOrder leftTree) ++ [message ]++ (inOrder rightTree)
+
+whatWentWrong :: [LogMessage] -> [String]
+whatWentWrong = map getLogContent . filterByErrorSeverity (> 50) . inOrder . build
+  where
+    filterByErrorSeverity f =
+      filter (\message ->
+        case message of
+          LogMessage (Error severity) _ _ -> f severity
+          _ -> False
+      )
+    getLogContent (LogMessage _ _ content) = content
+    getLogContent (Unknown content) = content
+
