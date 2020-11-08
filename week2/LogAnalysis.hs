@@ -35,7 +35,7 @@ build = foldr insert Leaf
 inOrder :: MessageTree -> [LogMessage]
 inOrder Leaf = []
 inOrder (Node leftTree message rightTree) =
-  (inOrder leftTree) ++ [message ]++ (inOrder rightTree)
+  (inOrder leftTree) ++ [message] ++ (inOrder rightTree)
 
 whatWentWrong :: [LogMessage] -> [String]
 whatWentWrong = map getLogContent . filterByErrorSeverity (> 50) . inOrder . build
