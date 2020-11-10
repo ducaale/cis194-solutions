@@ -21,7 +21,7 @@ histogram data' = histogram' (freqFromZeroToNine data') ++ "\n" ++ footer
   where
     freq = map (\x -> (head x, length x)) . group . sort
     freqFromZeroToNine nums = map (\x -> fromMaybe 0 . lookup x . freq $ nums) [0..9]
-    footer = (take 10 $ repeat '=') ++ "\n" ++ ['0'..'9']
+    footer = (replicate 10 '=') ++ "\n" ++ ['0'..'9']
     histogram' nums
       | all (< 1) nums = []
       | otherwise =
