@@ -1,1 +1,1 @@
-# cs194-solutions
+# cis194-solutions
