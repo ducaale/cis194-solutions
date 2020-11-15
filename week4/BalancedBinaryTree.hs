@@ -26,6 +26,7 @@ balance tree@(Node _ leftTree _ rightTree)
   | (depth leftTree) - (depth rightTree) > 1 = rotateRight tree
   | (depth rightTree) - (depth leftTree) > 1 = rotateLeft tree
   | otherwise = tree
+  -- TODO: implement avl double rotation
 
 rotateLeft :: Tree a -> Tree a
 rotateLeft Leaf = Leaf
