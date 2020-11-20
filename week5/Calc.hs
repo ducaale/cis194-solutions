@@ -1,17 +1,19 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
+import qualified Data.Map as M
+
 import ExprT
 import Parser
-import qualified StackVM as S
+import StackVM
 
 eval :: ExprT -> Integer
-eval (Lit n) = n
-eval (Add expr1 expr2) = (eval expr1) + (eval expr2)
-eval (Mul expr1 expr2) = (eval expr1) * (eval expr2)
+eval (ExprT.Lit n) = n
+eval (ExprT.Add expr1 expr2) = (eval expr1) + (eval expr2)
+eval (ExprT.Mul expr1 expr2) = (eval expr1) * (eval expr2)
 
 evalStr :: String -> Maybe Integer
-evalStr = fmap eval . parseExp Lit Add Mul
+evalStr = fmap eval . parseExp ExprT.Lit ExprT.Add ExprT.Mul
 
 class Expr a where
   lit :: Integer -> a
@@ -19,9 +21,9 @@ class Expr a where
   mul :: a -> a -> a
 
 instance Expr ExprT where
-  lit = Lit
-  add = Add
-  mul = Mul
+  lit = ExprT.Lit
+  add = ExprT.Add
+  mul = ExprT.Mul
 
 instance Expr Integer where
   lit = id
@@ -47,11 +49,46 @@ instance Expr Mod7 where
   add (Mod7 n1) (Mod7 n2) = Mod7 $ (n1 + n2) `mod` 7
   mul (Mod7 n1) (Mod7 n2) = Mod7 $ (n1 * n2) `mod` 7
 
-instance Expr S.Program where
-  lit n = [S.PushI n]
-  add expr1 expr2 = expr1 ++ expr2 ++ [S.Add] 
-  mul expr1 expr2 = expr1 ++ expr2 ++ [S.Mul]
+instance Expr Program where
+  lit n = [StackVM.PushI n]
+  add expr1 expr2 = expr1 ++ expr2 ++ [StackVM.Add] 
+  mul expr1 expr2 = expr1 ++ expr2 ++ [StackVM.Mul]
 
-compile :: String -> Maybe S.Program
+compile :: String -> Maybe Program
 compile = parseExp lit add mul
  
+class HasVars a where
+  var :: String -> a
+
+data VarExprT
+  = Lit Integer
+  | Add VarExprT VarExprT
+  | Mul VarExprT VarExprT
+  | Var String
+  deriving (Show, Eq)
+
+instance Expr VarExprT where
+  lit = Main.Lit
+  add = Main.Add
+  mul = Main.Mul
+
+instance HasVars VarExprT where
+  var = Main.Var  
+
+instance HasVars (M.Map String Integer -> Maybe Integer) where
+  var = M.lookup
+
+instance Expr (M.Map String Integer -> Maybe Integer) where
+  lit n _ = Just n
+  add exp1 exp2 vs = do
+    n1 <- (exp1 vs)
+    n2 <- (exp2 vs)
+    Just $ n1 + n2
+  mul exp1 exp2 vs = do
+    n1 <- (exp1 vs)
+    n2 <- (exp2 vs)
+    Just $ n1 * n2
+
+withVars :: [(String, Integer)] -> (M.Map String Integer -> Maybe Integer) -> Maybe Integer
+withVars vs exp = exp $ M.fromList vs
+
