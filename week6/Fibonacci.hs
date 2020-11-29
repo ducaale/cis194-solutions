@@ -32,5 +32,12 @@ nats :: Stream Integer
 nats = streamFromSeed succ 0
 
 ruler :: Stream Integer
-ruler = undefined
+ruler = streamMap temp (streamFromSeed succ 1)
+  where
+    -- TODO: figure out a name shorter than `largest power of 2 which evenly divides n`
+    temp n
+      | odd n     = 0
+      | otherwise = 1 + temp (n `div` 2)
+
+-- TODO : solve remaining optional parts
 
