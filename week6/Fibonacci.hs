@@ -1,3 +1,5 @@
+import Data.List
+
 fib :: Integer -> Integer
 fib 0 = 0
 fib 1 = 1
@@ -38,6 +40,17 @@ ruler = streamMap temp (streamFromSeed succ 1)
     temp n
       | odd n     = 0
       | otherwise = 1 + temp (n `div` 2)
+
+-- alternative implementation of ruler
+--
+-- this works
+-- interleave x list = [x] ++ (intersperse x list) ++ [x]
+-- ruler1 = take 20 (foldr interleave [] [0..])
+--
+-- but this doesn't
+-- interleave x (Cons y ys) = Cons x (Cons y (interleave x ys))
+-- foldStream f (Cons x xs) = f x (foldStream f xs)
+-- ruler2 = foldStream interleave nats
 
 -- TODO : solve remaining optional parts
 
