@@ -33,24 +33,17 @@ streamFromSeed f x = Cons x (streamFromSeed f (f x))
 nats :: Stream Integer
 nats = streamFromSeed succ 0
 
-ruler :: Stream Integer
-ruler = streamMap temp (streamFromSeed succ 1)
-  where
-    -- TODO: figure out a name shorter than `largest power of 2 which evenly divides n`
-    temp n
-      | odd n     = 0
-      | otherwise = 1 + temp (n `div` 2)
+-- See https://stackoverflow.com/a/65272351/5915221
+-- for why we can't immediately pattern match the stream
+streamIntersperse :: a -> Stream a -> Stream a
+streamIntersperse x stream = Cons x (Cons y (streamIntersperse x ys))
+  where (Cons y ys) = stream
 
--- alternative implementation of ruler
---
--- this works
--- interleave x list = [x] ++ (intersperse x list) ++ [x]
--- ruler1 = take 20 (foldr interleave [] [0..])
---
--- but this doesn't
--- interleave x (Cons y ys) = Cons x (Cons y (interleave x ys))
--- foldStream f (Cons x xs) = f x (foldStream f xs)
--- ruler2 = foldStream interleave nats
+streamFold :: (a -> b -> b) -> Stream a -> b
+streamFold f (Cons x xs) = f x (streamFold f xs)
+
+ruler :: Stream Integer
+ruler = streamFold streamIntersperse nats
 
 -- TODO : solve remaining optional parts
 
